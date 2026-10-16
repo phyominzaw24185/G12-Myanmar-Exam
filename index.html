@@ -740,15 +740,18 @@ const AL = {id:'al', name:'အလင်္ကာ', hint:'အခန်းအလ�
 const alHtml = ch => { const x=LQ.find(n=>n.g==='အလင်္ကာ'&&n.t.startsWith('အခန်း ('+ch.no+')')); return x?x.h:''; };
 const alGroups = ch => alHtml(ch).split('<h3 class="alh">').slice(1).map(p=>{const i=p.indexOf('</h3>');return {title:p.slice(0,i),rows:p.slice(i+5).match(/<div class="alq">[\s\S]*?<\/div>/g)||[]};});
 const alCount = ch => (alHtml(ch).match(/class="alq"/g)||[]).length;
-const tabsOf = l => l.hasKh ? [...TABS, KH, AL] : TABS;
-const grpsOf = (ch,t) => t==='al' ? alGroups(ch) : t==='kh' ? (ch.kh||[]) : ch.groups.filter(g=>(g[t]||[]).length);
-const rowsOf = (g,t) => (t==='kh'||t==='al') ? g.rows : (g[t]||[]);
+const AKTAB = {id:'ak', name:'အလင်္ကာမျိုးတူစု', hint:'အလင်္ကာအမျိုးအစားတူများကို စုထားသည်။ အမျိုးအစားတစ်ခုချင်း၏ ခေါင်းစဉ်ကို နှိပ်၍ ကြည့်ပါ။'};
+const AKT = ['မြည်သံစွဲ','အတိသယဝုတ္တိ','ဥပမာ','ရူပက','ဝင်္ကဝုတ္တိ'];
+const akGroups = ch => { const by={}; alGroups(ch).forEach(g=>g.rows.forEach(r=>{ const m=r.match(/– (.*?)အလင်္ကာ<\/strong>/); const t=m?m[1]:''; (by[t]=by[t]||[]).push(r.replace('<div class="alq">','<div class="alq"><p class="alt">'+g.title+'</p>')); })); return AKT.filter(t=>by[t]).map(t=>({title:t+'အလင်္ကာ',rows:by[t]})); };
+const tabsOf = l => l.hasKh ? [...TABS, KH, AL, AKTAB] : TABS;
+const grpsOf = (ch,t) => t==='al' ? alGroups(ch) : t==='ak' ? akGroups(ch) : t==='kh' ? (ch.kh||[]) : ch.groups.filter(g=>(g[t]||[]).length);
+const rowsOf = (g,t) => (t==='kh'||t==='al'||t==='ak') ? g.rows : (g[t]||[]);
 
 /* ===== ကူညီသည့် function များ ===== */
 const $app = document.getElementById('app'), $crumbs = document.getElementById('crumbs');
 const MM='၀၁၂၃၄၅၆၇၈၉', mm = n => String(n).replace(/\d/g, d => MM[d]);
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const total = (ch, t) => t==='al' ? alCount(ch) : t==='kh' ? (ch.kh||[]).reduce((n,g)=>n+g.rows.length,0) : ch.groups.reduce((n,g)=>n+(g[t]||[]).length,0);
+const total = (ch, t) => (t==='al'||t==='ak') ? alCount(ch) : t==='kh' ? (ch.kh||[]).reduce((n,g)=>n+g.rows.length,0) : ch.groups.reduce((n,g)=>n+(g[t]||[]).length,0);
 const lessonTotal = l => l.chapters.reduce((n,c)=>n+TABS.reduce((m,t)=>m+total(c,t.id),0),0);
 let curTab = 'tf';
 let curSet = 'old';
@@ -922,7 +925,7 @@ function viewLesson(ci){
   let body;
   if (total(ch, curTab) === 0){
     body = `<div class="empty"><b>${tab.name} မေးခွန်းများ မကြာမီ ထည့်ပါမည်။</b>ဤအခန်းအတွက် ထည့်သွင်းရန် ကျန်ရှိနေသေးသည်။</div>`;
-  } else if (curTab==='al'){
+  } else if (curTab==='al'||curTab==='ak'){
     body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p></div>` + vis.map((g,gi)=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>အလင်္ကာ ${mm(g.rows.length)} ခု</span></h3><div class="nt-body">${g.rows.join('')}</div></section>`).join('');
   } else {
     body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p>
@@ -1068,7 +1071,7 @@ function show(h){
   const LL = LESSONS.find(x=>x.id===l);
   if (!LL) return viewGrade();
   curL = LL;
-  curTab = (['tf','fill','mcq'].includes(t) || ((t==='kh'||t==='al') && curL.hasKh)) ? t : ((curTab==='kh'||curTab==='al') && !curL.hasKh ? 'tf' : curTab);
+  curTab = (['tf','fill','mcq'].includes(t) || ((t==='kh'||t==='al'||t==='ak') && curL.hasKh)) ? t : ((curTab==='kh'||curTab==='al'||curTab==='ak') && !curL.hasKh ? 'tf' : curTab);
   const ci = Math.min(Math.max((parseInt(c,10)||1)-1,0), curL.chapters.length-1);
   viewLesson(ci);
 }
