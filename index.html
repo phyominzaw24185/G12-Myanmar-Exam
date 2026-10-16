@@ -738,10 +738,11 @@ const TABS = [
 const KH = {id:'kh', name:'ခက်ဆစ်', hint:'ခက်ဆစ်ကို ကြည့်ပြီး အဓိပ္ပာယ်ကို စဉ်းစားပါ။ “အဖြေကြည့်မည်” ကို နှိပ်လျှင် အဓိပ္ပာယ် ပေါ်လာမည်။ အဝါရောင်ခြယ်ထားသော စာလုံးများသည် စာမေးပွဲတွင် ပါခဲ့ဖူးသည် (နှစ်နှင့် မေးခွန်းစုံကို အောက်တွင် ပြထားသည်)။'};
 const AL = {id:'al', name:'အလင်္ကာ', hint:'အခန်းအလိုက် အလင်္ကာများ၊ မေးခွန်းနှစ်နှင့် အကြောင်းပြချက်ကို ကြည့်ပါ။'};
 const alHtml = ch => { const x=LQ.find(n=>n.g==='အလင်္ကာ'&&n.t.startsWith('အခန်း ('+ch.no+')')); return x?x.h:''; };
+const alGroups = ch => alHtml(ch).split('<h3 class="alh">').slice(1).map(p=>{const i=p.indexOf('</h3>');return {title:p.slice(0,i),rows:p.slice(i+5).match(/<div class="alq">[\s\S]*?<\/div>/g)||[]};});
 const alCount = ch => (alHtml(ch).match(/class="alq"/g)||[]).length;
 const tabsOf = l => l.hasKh ? [...TABS, KH, AL] : TABS;
-const grpsOf = (ch,t) => t==='al' ? [] : t==='kh' ? (ch.kh||[]) : ch.groups.filter(g=>(g[t]||[]).length);
-const rowsOf = (g,t) => t==='kh' ? g.rows : (g[t]||[]);
+const grpsOf = (ch,t) => t==='al' ? alGroups(ch) : t==='kh' ? (ch.kh||[]) : ch.groups.filter(g=>(g[t]||[]).length);
+const rowsOf = (g,t) => (t==='kh'||t==='al') ? g.rows : (g[t]||[]);
 
 /* ===== ကူညီသည့် function များ ===== */
 const $app = document.getElementById('app'), $crumbs = document.getElementById('crumbs');
@@ -922,7 +923,7 @@ function viewLesson(ci){
   if (total(ch, curTab) === 0){
     body = `<div class="empty"><b>${tab.name} မေးခွန်းများ မကြာမီ ထည့်ပါမည်။</b>ဤအခန်းအတွက် ထည့်သွင်းရန် ကျန်ရှိနေသေးသည်။</div>`;
   } else if (curTab==='al'){
-    body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p></div><div class="nt-body">${alHtml(ch)}</div>`;
+    body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p></div>` + vis.map((g,gi)=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>အလင်္ကာ ${mm(g.rows.length)} ခု</span></h3><div class="nt-body">${g.rows.join('')}</div></section>`).join('');
   } else {
     body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p>
         <div class="btns"><button class="btn solid" data-all>အဖြေအားလုံး ကြည့်မည်</button><button class="btn" data-reset>ပြန်စမည်</button></div></div>` +
