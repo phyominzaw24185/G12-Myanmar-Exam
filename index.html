@@ -922,6 +922,7 @@ function viewLesson(ci){
   const tab = TT.find(t=>t.id===curTab) || TT[0];
   const vis = grpsOf(ch,curTab);
   const jump = vis.length>1 ? `<nav class="jump" aria-label="ခေါင်းစဉ်ခွဲများသို့ သွားရန်">${vis.map((g,gi)=>`<button data-jump="${gi}">${esc(g.title)}<small>${mm(rowsOf(g,curTab).length)}</small></button>`).join('')}</nav>` : '';
+  const jump2 = (curTab==='al'||curTab==='ak') && vis.length>1 ? `<nav class="jump" aria-label="ခေါင်းစဉ်သီးသန့်ကြည့်ရန်"><button data-alsel="all" class="on">အားလုံး</button>${vis.map((g,gi)=>`<button data-alsel="${gi}">${esc(g.title)}<small>${mm(g.rows.length)}</small></button>`).join('')}</nav>` : '';
   let body;
   if (total(ch, curTab) === 0){
     body = `<div class="empty"><b>${tab.name} မေးခွန်းများ မကြာမီ ထည့်ပါမည်။</b>ဤအခန်းအတွက် ထည့်သွင်းရန် ကျန်ရှိနေသေးသည်။</div>`;
@@ -947,7 +948,7 @@ function viewLesson(ci){
     <div class="chs" role="group" aria-label="အခန်းများ">${chBtns}</div>
     <h2 style="margin-top:16px">အခန်း (${ch.no}) ${esc(ch.title)}</h2>
     <p class="note">မေးခွန်းအောက်ရှိ <span class="chip"><b>၂၄</b>ပြည်တွင်း မေးခွန်း ၂</span> သည် ထိုမေးခွန်း မည်သည့်နှစ်၊ မည်သည့်စာမေးပွဲ၊ မည်သည့်စုံတွင် ပါခဲ့သည်ကို ပြသည်။ နံပါတ်တူ မေးခွန်း ၂ ခု ပါလျှင် စာအုပ်ထဲက ◆ မေးခွန်းဖြစ်သည်။</p>
-    <div class="tabbar"><div class="tabs${TT.length>3?' four':''}" role="tablist" aria-label="မေးခွန်းအမျိုးအစား">${tabBtns}</div>${jump}</div>
+    <div class="tabbar"><div class="tabs${TT.length>3?' four':''}" role="tablist" aria-label="မေးခွန်းအမျိုးအစား">${tabBtns}</div>${jump2||jump}</div>
     ${body}`;
 }
 
@@ -1094,7 +1095,7 @@ function setRevealed(q,on){
   q.querySelector('[data-rv]').textContent = on ? 'အဖြေဖျောက်မည်' : 'အဖြေကြည့်မည်';
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-nav],[data-set],[data-tab],[data-rv],[data-pick],[data-all],[data-reset],[data-jump],[data-newexam],[data-clear],[data-dur],[data-start],[data-end],[data-logout]');
+  const t = e.target.closest('[data-nav],[data-set],[data-tab],[data-rv],[data-pick],[data-all],[data-reset],[data-jump],[data-alsel],[data-newexam],[data-clear],[data-dur],[data-start],[data-end],[data-logout]');
   if (!t) return;
   if (t.hasAttribute('data-logout')){ authClear(); viewLogin(); return; }
   if (t.hasAttribute('data-dur')){ PX.mins=+t.getAttribute('data-dur'); t.parentNode.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b===t)); return; }
@@ -1106,6 +1107,12 @@ document.addEventListener('click', e => {
   if (t.hasAttribute('data-newexam')){ navigate('g12-practice-'+(1000+Math.floor(Math.random()*9000))); return; }
   if (t.hasAttribute('data-clear')){ $app.querySelectorAll('.q .opt').forEach(o=>o.classList.remove('picked')); $app.querySelectorAll('input.blank').forEach(i=>i.value=''); return; }
   if (t.hasAttribute('data-nav')){ e.preventDefault(); navigate(t.getAttribute('data-nav')); return; }
+  if (t.hasAttribute('data-alsel')){
+    const v=t.getAttribute('data-alsel');
+    $app.querySelectorAll('section.group[id^="grp-"]').forEach(x=>{ x.style.display=(v==='all'||x.id==='grp-'+v)?'':'none'; });
+    t.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===t));
+    window.scrollTo({top:0,behavior:'smooth'}); return;
+  }
   if (t.hasAttribute('data-jump')){
     const g=document.getElementById('grp-'+t.getAttribute('data-jump')); if(!g) return;
     const bar=$app.querySelector('.tabbar'), off=(bar?bar.offsetHeight:0)+8;
