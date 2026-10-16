@@ -744,6 +744,7 @@ const AKTAB = {id:'ak', name:'အလင်္ကာမျိုးတူစု',
 const AKT = ['မြည်သံစွဲ','အတိသယဝုတ္တိ','ဥပမာ','ရူပက','ဝင်္ကဝုတ္တိ'];
 const akGroups = ch => { const by={}; alGroups(ch).forEach(g=>g.rows.forEach(r=>{ const m=r.match(/– (.*?)အလင်္ကာ<\/strong>/); const t=m?m[1]:''; (by[t]=by[t]||[]).push(r.replace('<div class="alq">','<div class="alq"><p class="alt">'+g.title+'</p>')); })); return AKT.filter(t=>by[t]).map(t=>({title:t+'အလင်္ကာ',rows:by[t]})); };
 const tabsOf = l => l.hasKh ? [...TABS, KH, AL, AKTAB] : TABS;
+const hideAns = r => r.replace(/^(<div class="alq">(?:<p class="alt">[^<]*<\/p>)?)<p><strong>(.*?) – (.*?)<\/strong><\/p>(<p class="alt">.*?<\/p>)([\s\S]*)<\/div>$/, (m,pre,ph,ty,tags,rest)=>pre+'<p><strong>'+ph+'</strong></p>'+tags+'<button class="btn" data-alans>အဖြေကြည့်မည်</button><div class="alans" hidden><p><strong>'+ty+'</strong></p>'+rest+'</div></div>');
 const grpsOf = (ch,t) => t==='al' ? alGroups(ch) : t==='ak' ? akGroups(ch) : t==='kh' ? (ch.kh||[]) : ch.groups.filter(g=>(g[t]||[]).length);
 const rowsOf = (g,t) => (t==='kh'||t==='al'||t==='ak') ? g.rows : (g[t]||[]);
 
@@ -927,7 +928,7 @@ function viewLesson(ci){
   if (total(ch, curTab) === 0){
     body = `<div class="empty"><b>${tab.name} မေးခွန်းများ မကြာမီ ထည့်ပါမည်။</b>ဤအခန်းအတွက် ထည့်သွင်းရန် ကျန်ရှိနေသေးသည်။</div>`;
   } else if (curTab==='al'||curTab==='ak'){
-    body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p></div>` + vis.map((g,gi)=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>အလင်္ကာ ${mm(g.rows.length)} ခု</span></h3><div class="nt-body">${g.rows.join('')}</div></section>`).join('');
+    body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p><div class="btns"><button class="btn solid" data-alall>အဖြေအားလုံး ကြည့်မည်</button></div></div>` + vis.map((g,gi)=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>အလင်္ကာ ${mm(g.rows.length)} ခု</span></h3><div class="nt-body">${g.rows.map(hideAns).join('')}</div></section>`).join('');
   } else {
     body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p>
         <div class="btns"><button class="btn solid" data-all>အဖြေအားလုံး ကြည့်မည်</button><button class="btn" data-reset>ပြန်စမည်</button></div></div>` +
@@ -1095,7 +1096,7 @@ function setRevealed(q,on){
   q.querySelector('[data-rv]').textContent = on ? 'အဖြေဖျောက်မည်' : 'အဖြေကြည့်မည်';
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-nav],[data-set],[data-tab],[data-rv],[data-pick],[data-all],[data-reset],[data-jump],[data-alsel],[data-newexam],[data-clear],[data-dur],[data-start],[data-end],[data-logout]');
+  const t = e.target.closest('[data-nav],[data-set],[data-tab],[data-rv],[data-pick],[data-all],[data-reset],[data-jump],[data-alsel],[data-alans],[data-alall],[data-newexam],[data-clear],[data-dur],[data-start],[data-end],[data-logout]');
   if (!t) return;
   if (t.hasAttribute('data-logout')){ authClear(); viewLogin(); return; }
   if (t.hasAttribute('data-dur')){ PX.mins=+t.getAttribute('data-dur'); t.parentNode.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b===t)); return; }
@@ -1107,6 +1108,12 @@ document.addEventListener('click', e => {
   if (t.hasAttribute('data-newexam')){ navigate('g12-practice-'+(1000+Math.floor(Math.random()*9000))); return; }
   if (t.hasAttribute('data-clear')){ $app.querySelectorAll('.q .opt').forEach(o=>o.classList.remove('picked')); $app.querySelectorAll('input.blank').forEach(i=>i.value=''); return; }
   if (t.hasAttribute('data-nav')){ e.preventDefault(); navigate(t.getAttribute('data-nav')); return; }
+  if (t.hasAttribute('data-alans')){ const d=t.nextElementSibling; d.hidden=!d.hidden; t.textContent=d.hidden?'အဖြေကြည့်မည်':'အဖြေဖျောက်မည်'; return; }
+  if (t.hasAttribute('data-alall')){
+    const ds=[...$app.querySelectorAll('.alans')], show=ds.some(d=>d.hidden);
+    ds.forEach(d=>{ d.hidden=!show; d.previousElementSibling.textContent=show?'အဖြေဖျောက်မည်':'အဖြေကြည့်မည်'; });
+    t.textContent=show?'အဖြေအားလုံး ဖျောက်မည်':'အဖြေအားလုံး ကြည့်မည်'; return;
+  }
   if (t.hasAttribute('data-alsel')){
     const v=t.getAttribute('data-alsel');
     $app.querySelectorAll('section.group[id^="grp-"]').forEach(x=>{ x.style.display=(v==='all'||x.id==='grp-'+v)?'':'none'; });
