@@ -1038,6 +1038,22 @@ const ES=LQ.filter(x=>x.g==='စာစီစာကုံး'||x.g==='အဆိ�
 const LQ2=LQ.filter(x=>!ES.includes(x));
 const hideSk = h => h.replace(/(<div class="alq"><p><strong>.*?<\/strong><\/p><p class="alt">.*?<\/p>)([\s\S]*?)<\/div>(?=<div class="alq">|$)/g,(m,a,b)=>a+'<button class="btn" data-alans>အဖြေကြည့်မည်</button><div class="alans" hidden>'+b+'</div></div>');
 function viewDoc(cStr,list,route,title,crumb){
+  if(route==='essay'){
+    const lm=!cStr||/^L/.test(cStr);
+    let i=(parseInt(lm?String(cStr||'').slice(1):cStr,10)||1)-1; i=Math.min(Math.max(i,0),list.length-1);
+    const n=list[i], G=[...new Set(list.map(x=>x.g))];
+    setCrumbs([['ဒွါဒသမတန်း','g12'],[crumb]]);
+    if(lm){
+      const gb=G.map(g=>`<button class="tab" data-nav="g12-essay-L${list.findIndex(x=>x.g===g)+1}" aria-selected="${g===n.g}"><span>${g}</span></button>`).join('');
+      const chips=list.map((x,k)=>x.g===n.g?`<button data-nav="g12-essay-${k+1}">${esc(x.t)}</button>`:'').join('');
+      $app.innerHTML=`<section class="hero"><h1><em>${title}</em></h1></section><div class="nt-grp" role="tablist">${gb}</div><div class="tabbar" style="margin-top:10px"><nav class="jump jlist" aria-label="ခေါင်းစဉ်ရွေးရန်">${chips}</nav></div>`;
+      return;
+    }
+    const back=`<div class="btns" style="margin:10px 0"><button class="btn" data-nav="g12-essay-L${i+1}">← ခေါင်းစဉ်စာရင်း (${n.g})</button></div>`;
+    $app.innerHTML=`<section class="hero"><h1><em>${title}</em></h1></section>${back}<h2 style="margin-top:6px">${esc(n.t)}</h2><div class="nt-body lq">${n.h}</div>${back}`;
+    window.scrollTo(0,0);
+    return;
+  }
   let i=(parseInt(cStr,10)||1)-1; i=Math.min(Math.max(i,0),list.length-1);
   const n=list[i];
   const G=[...new Set(list.map(x=>x.g))];
