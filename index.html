@@ -1162,7 +1162,7 @@ document.addEventListener('click', e => {
     const v=t.getAttribute('data-alsel');
     $app.querySelectorAll('section.group[id^="grp-"]').forEach(x=>{ x.style.display=(v==='all'||x.id==='grp-'+v)?'':'none'; });
     t.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===t));
-    window.scrollTo({top:0,behavior:'smooth'}); return;
+    const sb=$app.querySelector('.secbar'); if(sb) sb.scrollIntoView({behavior:'smooth',block:'start'}); else window.scrollTo({top:0,behavior:'smooth'}); return;
   }
   if (t.hasAttribute('data-jump')){
     const g=document.getElementById('grp-'+t.getAttribute('data-jump')); if(!g) return;
