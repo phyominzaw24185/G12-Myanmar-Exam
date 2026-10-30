@@ -749,7 +749,7 @@ const skHtml = ch => ch.short==='ပြဇာတ်' ? SKH : '';
 const skRows = ch => skHtml(ch).match(/<div class="alq">[\s\S]*?<\/div>(?=<div class="alq">|$)/g)||[];
 const skGroups = ch => { const r=skRows(ch); return r.length?[{title:'ရေသည်ပြဇာတ်',rows:r}]:[]; };
 const tabsOf = l => l.hasKh ? [...TABS, KH, AL, AKTAB, SKTAB] : TABS;
-const hideAns = r => r.replace(/^(<div class="alq">(?:<p class="alt">[^<]*<\/p>)?)<p><strong>(.*?) – (.*?)<\/strong><\/p>(<p class="alt">.*?<\/p>)([\s\S]*)<\/div>$/, (m,pre,ph,ty,tags,rest)=>pre+'<p class="alp"><strong>'+ph+'</strong></p>'+tags+'<button class="btn" data-alans>အဖြေကြည့်မည်</button><div class="alans" hidden><p><strong>'+ty+'</strong></p>'+rest+'</div></div>');
+const hideAns = r => r.replace(/^(<div class="alq">(?:<p class="alt">[^<]*<\/p>)?)<p><strong>(.*?) – (.*?)<\/strong><\/p>(<p class="alt">.*?<\/p>)?([\s\S]*)<\/div>$/, (m,pre,ph,ty,tags,rest)=>pre+'<p class="alp"><strong>'+ph+'</strong></p>'+(tags||'')+'<button class="btn" data-alans>အဖြေကြည့်မည်</button><div class="alans" hidden><p><strong>'+ty+'</strong></p>'+rest+'</div></div>');
 const grpsOf = (ch,t) => t==='al' ? alGroups(ch) : t==='ak' ? akGroups(ch) : t==='sk' ? skGroups(ch) : t==='kh' ? (ch.kh||[]) : ch.groups.filter(g=>(g[t]||[]).length);
 const rowsOf = (g,t) => (t==='kh'||t==='al'||t==='ak'||t==='sk') ? g.rows : (g[t]||[]);
 
