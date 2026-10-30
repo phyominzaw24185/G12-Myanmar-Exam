@@ -198,7 +198,7 @@ ol.qs{list-style:none;margin:0;padding:0}
 .note{margin-block:16px 0;padding:8px 14px;border-radius:8px;background:var(--accent-soft);font-size:.9rem}
 .foot{margin-block:40px 32px;padding-top:14px;border-top:2px solid var(--line);color:var(--muted);font-size:.85rem}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
-.alold .alq:not(:has(.yr)){display:none}.alold section.group:not(:has(.yr)){display:none}.alold .jump[aria-label*="သီးသန့်"]{display:none}.alq{padding:12px 0;border-bottom:1px solid var(--line,#e6dfcf)}.alq p{margin:4px 0}.alq ul{margin:6px 0 6px 18px;padding:0}.alt{font-size:.85em;color:var(--mute,#7a7566)}.alh{margin:18px 0 4px}
+.foldlist{display:grid;gap:8px;margin-top:12px}.fold{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;padding:14px 16px;min-height:58px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);font:inherit;line-height:1.55}.fold span{display:flex;flex-direction:column;min-width:0}.fold b{font-size:1rem}.fold small{color:var(--muted);font-size:.78rem}.fold em{font-style:normal;color:var(--muted);font-size:.82rem;white-space:nowrap;flex:none}.fold::after{content:"›";font-size:1.5rem;color:var(--accent);flex:none;line-height:1}.fold:active{background:var(--accent);color:var(--on-accent)}.backb{margin-top:12px}.alold .alq:not(:has(.yr)){display:none}.alold section.group:not(:has(.yr)){display:none}.alold .jump[aria-label*="သီးသန့်"]{display:none}.alq{padding:12px 0;border-bottom:1px solid var(--line,#e6dfcf)}.alq p{margin:4px 0}.alq ul{margin:6px 0 6px 18px;padding:0}.alt{font-size:.85em;color:var(--mute,#7a7566)}.alh{margin:18px 0 4px}
 .alp{font-size:1.18em;margin:8px 0 4px;padding:6px 10px;border-left:5px solid var(--accent,#9a3b12);background:rgba(154,59,18,.08);border-radius:0 8px 8px 0}.alp strong{color:var(--accent,#9a3b12)}.alans>p:first-child strong{display:inline-block;padding:2px 10px;border-radius:999px;background:rgba(154,59,18,.12)}.alq{margin-top:6px}.fbl{padding-left:1.4em}.fbl li{margin:6px 0;line-height:1.9}.fbl a{color:var(--accent,#2c4fb0);text-decoration:underline}</style>
 </head>
 <body>
@@ -920,43 +920,78 @@ function mcqHtml(q){
       <div class="ans" hidden>အဖြေ - <b>${L[a]}။ ${esc(opts[a])}</b>${note?`<small>${esc(note)}</small>`:''}</div>
     </div></li>`;
 }
-function viewLesson(ci){
+function viewLesson(ci, hasCh, tq, gq){
   const ch = curL.chapters[ci];
-  setCrumbs([['ဒွါဒသမတန်း','g12'],[curL.short,'g12-'+curL.id],['အခန်း ('+ch.no+')']]);
-  const chBtns = curL.chapters.map((c,k)=>`<button class="ch" data-nav="g12-${curL.id}-${k+1}-${curTab}" ${k===ci?'aria-current="true"':''}><b>အခန်း (${c.no})</b><small>${esc(c.short)}</small></button>`).join('');
   const TT = tabsOf(curL);
-  const tabBtns = TT.map(t=>`<button class="tab" role="tab" data-tab="${t.id}" aria-selected="${t.id===curTab}"><span>${t.name}</span><small>${mm(total(ch,t.id))} ခု</small></button>`).join('');
-  const tab = TT.find(t=>t.id===curTab) || TT[0];
+  const base = 'g12-'+curL.id;
+  const fold = (nav,title,sub,cnt) => `<button class="fold" data-nav="${nav}"><span><b>${title}</b>${sub?`<small>${sub}</small>`:''}</span>${cnt!==undefined&&cnt!==''?`<em>${cnt}</em>`:''}</button>`;
+  const setBtns = SETS.map(x=>`<button class="tab settab" role="tab" data-set="${x.id}" aria-selected="${x.id===curSet}"><span>${x.name}</span></button>`).join('');
+  /* ၁။ အခန်းများ */
+  if (!hasCh){
+    setCrumbs([['ဒွါဒသမတန်း','g12'],[curL.short]]);
+    const list = curL.chapters.map((c,k)=>fold(base+'-'+(k+1),'အခန်း ('+c.no+')',esc(c.short||c.title))).join('');
+    $app.innerHTML = `
+      <section class="hero"><h1><em>${esc(curL.title)}</em></h1></section>
+      <div class="tabs sets" role="tablist" aria-label="မေးခွန်းအစုံ">${setBtns}</div>
+      ${curSet!=='old' ? `<div class="empty"><b>မေးခွန်းသစ်များ မကြာမီ ထည့်ပါမည်။</b>ယခုရှိသော မေးခွန်းများကို “မေးခွန်းဟောင်း” တွင် ကြည့်နိုင်ပါသည်။</div>` : `<div class="foldlist">${list}</div>`}`;
+    return;
+  }
+  const tabOk = tq && TT.some(x=>x.id===tq);
+  /* ၂။ အမျိုးအစားများ */
+  if (!tabOk){
+    setCrumbs([['ဒွါဒသမတန်း','g12'],[curL.short,base],['အခန်း ('+ch.no+')']]);
+    const list = TT.map(t=>fold(base+'-'+(ci+1)+'-'+t.id,t.name,'',mm(total(ch,t.id))+' ခု')).join('');
+    $app.innerHTML = `
+      <section class="hero"><h1><em>${esc(curL.title)}</em></h1></section>
+      <h2 style="margin-top:16px">အခန်း (${ch.no}) ${esc(ch.title)}</h2>
+      <p class="note">မေးခွန်းအောက်ရှိ <span class="chip"><b>၂၄</b>ပြည်တွင်း မေးခွန်း ၂</span> သည် ထိုမေးခွန်း မည်သည့်နှစ်၊ မည်သည့်စာမေးပွဲ၊ မည်သည့်စုံတွင် ပါခဲ့သည်ကို ပြသည်။</p>
+      <div class="foldlist">${list}</div>`;
+    return;
+  }
+  curTab = tq;
+  const tab = TT.find(t=>t.id===curTab);
   const vis = grpsOf(ch,curTab);
-  const jump = vis.length>1 ? `<nav class="jump" aria-label="ခေါင်းစဉ်ခွဲများသို့ သွားရန်">${vis.map((g,gi)=>`<button data-jump="${gi}">${esc(g.title)}<small>${mm(rowsOf(g,curTab).length)}</small></button>`).join('')}</nav>` : '';
-  const jump2 = (curTab==='al'||curTab==='ak') && vis.length>1 ? `<nav class="jump jwrap" aria-label="ခေါင်းစဉ်သီးသန့်ကြည့်ရန်"><button data-alsel="all" class="on">အားလုံး</button>${vis.map((g,gi)=>`<button data-alsel="${gi}">${esc(g.title)}<small>${mm(g.rows.length)}</small></button>`).join('')}</nav>` : '';
-  let body;
+  const tabUrl = base+'-'+(ci+1)+'-'+curTab;
+  const chUrl = base+'-'+(ci+1);
   if (total(ch, curTab) === 0){
-    body = `<div class="empty"><b>${tab.name} မေးခွန်းများ မကြာမီ ထည့်ပါမည်။</b>ဤအခန်းအတွက် ထည့်သွင်းရန် ကျန်ရှိနေသေးသည်။</div>`;
-  } else if (curTab==='al'||curTab==='ak'||curTab==='sk'){
-    body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p><div class="btns">${curTab==='sk'?'':`<button class="btn${alOld?' solid':''}" data-alold>${alOld?'မေးခွန်းဟောင်းသီးသန့် ✓':'မေးခွန်းဟောင်းသီးသန့်'}</button>`}<button class="btn solid" data-alall>အဖြေအားလုံး ကြည့်မည်</button></div></div>` + vis.map((g,gi)=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>${curTab==='sk'?'စကားစပ်':'အလင်္ကာ'} ${mm(g.rows.length)} ခု</span></h3><div class="nt-body">${g.rows.map(curTab==='sk'?hideSk:hideAns).join('')}</div></section>`).join('');
+    setCrumbs([['ဒွါဒသမတန်း','g12'],[curL.short,base],['အခန်း ('+ch.no+')',chUrl],[tab.name]]);
+    $app.innerHTML = `<section class="hero"><h1><em>${esc(curL.title)}</em></h1></section><h2 style="margin-top:16px">${tab.name}</h2><div class="empty"><b>${tab.name} မေးခွန်းများ မကြာမီ ထည့်ပါမည်။</b>ဤအခန်းအတွက် ထည့်သွင်းရန် ကျန်ရှိနေသေးသည်။</div>`;
+    return;
+  }
+  const sel = vis.length>1 ? gq : '1';
+  /* ၃။ ခေါင်းစဉ်များ */
+  if (!sel){
+    setCrumbs([['ဒွါဒသမတန်း','g12'],[curL.short,base],['အခန်း ('+ch.no+')',chUrl],[tab.name]]);
+    const unit = (curTab==='al'||curTab==='ak') ? 'အလင်္ကာ' : curTab==='sk' ? 'စကားစပ်' : curTab==='kh' ? 'ခက်ဆစ်' : 'မေးခွန်း';
+    const cnt = g => (curTab==='al'||curTab==='ak'||curTab==='sk') ? g.rows.length : rowsOf(g,curTab).length;
+    const list = fold(tabUrl+'-all','အားလုံး','',mm(total(ch,curTab))+' ခု') + vis.map((g,k)=>fold(tabUrl+'-'+(k+1),esc(g.title),'',mm(cnt(g))+' ခု')).join('');
+    $app.innerHTML = `
+      <section class="hero"><h1><em>${esc(curL.title)}</em></h1></section>
+      <h2 style="margin-top:16px">အခန်း (${ch.no}) · ${tab.name}</h2>
+      <div class="foldlist">${list}</div>`;
+    return;
+  }
+  /* ၄။ အကြောင်းအရာ */
+  const groups = (sel==='all') ? vis.map((g,k)=>[g,k]) : (vis[(parseInt(sel,10)||1)-1] ? [[vis[(parseInt(sel,10)||1)-1],(parseInt(sel,10)||1)-1]] : vis.map((g,k)=>[g,k]));
+  const single = vis.length>1;
+  const gtitle = (sel==='all'||!single) ? tab.name : groups[0][0].title;
+  setCrumbs(single ? [['ဒွါဒသမတန်း','g12'],[curL.short,base],['အခန်း ('+ch.no+')',chUrl],[tab.name,tabUrl],[gtitle]] : [['ဒွါဒသမတန်း','g12'],[curL.short,base],['အခန်း ('+ch.no+')',chUrl],[tab.name]]);
+  let body;
+  if (curTab==='al'||curTab==='ak'||curTab==='sk'){
+    body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p><div class="btns">${curTab==='sk'?'':`<button class="btn${alOld?' solid':''}" data-alold>${alOld?'မေးခွန်းဟောင်းသီးသန့် ✓':'မေးခွန်းဟောင်းသီးသန့်'}</button>`}<button class="btn solid" data-alall>အဖြေအားလုံး ကြည့်မည်</button></div></div>` + groups.map(([g,gi])=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>${curTab==='sk'?'စကားစပ်':'အလင်္ကာ'} ${mm(g.rows.length)} ခု</span></h3><div class="nt-body">${g.rows.map(curTab==='sk'?hideSk:hideAns).join('')}</div></section>`).join('');
   } else {
     body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p>
         <div class="btns"><button class="btn solid" data-all>အဖြေအားလုံး ကြည့်မည်</button><button class="btn" data-reset>ပြန်စမည်</button></div></div>` +
-      vis.map((g,gi)=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>${curTab==='kh'?'ခက်ဆစ်':'မေးခွန်း'} ${mm(rowsOf(g,curTab).length)} ခု</span></h3>
+      groups.map(([g,gi])=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>${curTab==='kh'?'ခက်ဆစ်':'မေးခွန်း'} ${mm(rowsOf(g,curTab).length)} ခု</span></h3>
         <ol class="qs">${rowsOf(g,curTab).map(curTab==='kh'?khHtml:curTab==='fill'?fillHtml:curTab==='mcq'?mcqHtml:tfHtml).join('')}</ol></section>`).join('');
   }
-  const setBtns = SETS.map(x=>`<button class="tab settab" role="tab" data-set="${x.id}" aria-selected="${x.id===curSet}"><span>${x.name}</span></button>`).join('');
-  if (curSet !== 'old'){
-    $app.innerHTML = `
-    <section class="hero"><h1><em>${esc(curL.title)}</em></h1></section>
-    <div class="tabs sets" role="tablist" aria-label="မေးခွန်းအစုံ">${setBtns}</div>
-    <div class="empty"><b>မေးခွန်းသစ်များ မကြာမီ ထည့်ပါမည်။</b>ယခုရှိသော မေးခွန်းများကို “မေးခွန်းဟောင်း” တွင် ကြည့်နိုင်ပါသည်။</div>`;
-    return;
-  }
+  const back = single ? `<button class="btn backb" data-nav="${tabUrl}">‹ ခေါင်းစဉ်များသို့</button>` : `<button class="btn backb" data-nav="${chUrl}">‹ အမျိုးအစားများသို့</button>`;
   $app.innerHTML = `
     <section class="hero"><h1><em>${esc(curL.title)}</em></h1></section>
-    <div class="tabs sets" role="tablist" aria-label="မေးခွန်းအစုံ">${setBtns}</div>
-    <div class="chs" role="group" aria-label="အခန်းများ">${chBtns}</div>
-    <h2 style="margin-top:16px">အခန်း (${ch.no}) ${esc(ch.title)}</h2>
-    <p class="note">မေးခွန်းအောက်ရှိ <span class="chip"><b>၂၄</b>ပြည်တွင်း မေးခွန်း ၂</span> သည် ထိုမေးခွန်း မည်သည့်နှစ်၊ မည်သည့်စာမေးပွဲ၊ မည်သည့်စုံတွင် ပါခဲ့သည်ကို ပြသည်။ နံပါတ်တူ မေးခွန်း ၂ ခု ပါလျှင် စာအုပ်ထဲက ◆ မေးခွန်းဖြစ်သည်။</p>
-    <div class="tabbar"><div class="tabs${TT.length>3?' four':''}" role="tablist" aria-label="မေးခွန်းအမျိုးအစား">${tabBtns}</div>${jump2||jump}</div>
-    ${body}`;
+    ${back}
+    <h2 style="margin-top:12px">အခန်း (${ch.no}) · ${esc(gtitle)}</h2>
+    ${body}
+    ${back}`;
   $app.classList.toggle('alold',alOld&&(curTab==='al'||curTab==='ak'));
 }
 
@@ -1105,7 +1140,7 @@ function show(h){
   if (AUTH && AUTH.role==='trial' && Date.now()>TRIAL_END){ authClear(); return viewLogin('စမ်းသုံးခွင့် ကုန်ဆုံးပါပြီ (၂၀-၃-၂၀၂၇)။'); }
   if (!AUTH) return viewLogin();
   whoRender();
-  const [g, l, c, t] = (h||'').split('-');
+  const [g, l, c, t, gq] = (h||'').split('-');
   if (g !== 'g12') return viewHome();
   if (l==='practice') return viewPractice(c);
   if (l==='notes') return viewNotes(c);
@@ -1116,9 +1151,8 @@ function show(h){
   const LL = LESSONS.find(x=>x.id===l);
   if (!LL) return viewGrade();
   curL = LL;
-  curTab = (['tf','fill','mcq'].includes(t) || ((t==='kh'||t==='al'||t==='ak'||t==='sk') && curL.hasKh)) ? t : ((curTab==='kh'||curTab==='al'||curTab==='ak'||curTab==='sk') && !curL.hasKh ? 'tf' : curTab);
   const ci = Math.min(Math.max((parseInt(c,10)||1)-1,0), curL.chapters.length-1);
-  viewLesson(ci);
+  viewLesson(ci, !!c, t, gq);
 }
 function navigate(h){ try{ location.hash = h; }catch(e){} show(h); window.scrollTo(0,0); }
 const curChapter = () => { const p=(location.hash.slice(1)||'').split('-'); return Math.min(Math.max((parseInt(p[2],10)||1),1),3); };
