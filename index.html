@@ -198,7 +198,7 @@ ol.qs{list-style:none;margin:0;padding:0}
 .note{margin-block:16px 0;padding:8px 14px;border-radius:8px;background:var(--accent-soft);font-size:.9rem}
 .foot{margin-block:40px 32px;padding-top:14px;border-top:2px solid var(--line);color:var(--muted);font-size:.85rem}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
-.alq{padding:12px 0;border-bottom:1px solid var(--line,#e6dfcf)}.alq p{margin:4px 0}.alq ul{margin:6px 0 6px 18px;padding:0}.alt{font-size:.85em;color:var(--mute,#7a7566)}.alh{margin:18px 0 4px}
+.alold .alq:not(:has(.yr)){display:none}.alold section.group:not(:has(.yr)){display:none}.alold .jump[aria-label*="သီးသန့်"]{display:none}.alq{padding:12px 0;border-bottom:1px solid var(--line,#e6dfcf)}.alq p{margin:4px 0}.alq ul{margin:6px 0 6px 18px;padding:0}.alt{font-size:.85em;color:var(--mute,#7a7566)}.alh{margin:18px 0 4px}
 .alp{font-size:1.18em;margin:8px 0 4px;padding:6px 10px;border-left:5px solid var(--accent,#9a3b12);background:rgba(154,59,18,.08);border-radius:0 8px 8px 0}.alp strong{color:var(--accent,#9a3b12)}.alans>p:first-child strong{display:inline-block;padding:2px 10px;border-radius:999px;background:rgba(154,59,18,.12)}.alq{margin-top:6px}.fbl{padding-left:1.4em}.fbl li{margin:6px 0;line-height:1.9}.fbl a{color:var(--accent,#2c4fb0);text-decoration:underline}</style>
 </head>
 <body>
@@ -760,6 +760,7 @@ const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const total = (ch, t) => t==='sk' ? skRows(ch).length : (t==='al'||t==='ak') ? alCount(ch) : t==='kh' ? (ch.kh||[]).reduce((n,g)=>n+g.rows.length,0) : ch.groups.reduce((n,g)=>n+(g[t]||[]).length,0);
 const lessonTotal = l => l.chapters.reduce((n,c)=>n+TABS.reduce((m,t)=>m+total(c,t.id),0),0);
 let curTab = 'tf';
+let alOld = false;
 let curSet = 'old';
 const SETS = [{id:'old',name:'မေးခွန်းဟောင်း'},{id:'new',name:'မေးခွန်းသစ်'}];
 
@@ -933,7 +934,7 @@ function viewLesson(ci){
   if (total(ch, curTab) === 0){
     body = `<div class="empty"><b>${tab.name} မေးခွန်းများ မကြာမီ ထည့်ပါမည်။</b>ဤအခန်းအတွက် ထည့်သွင်းရန် ကျန်ရှိနေသေးသည်။</div>`;
   } else if (curTab==='al'||curTab==='ak'||curTab==='sk'){
-    body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p><div class="btns"><button class="btn solid" data-alall>အဖြေအားလုံး ကြည့်မည်</button></div></div>` + vis.map((g,gi)=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>${curTab==='sk'?'စကားစပ်':'အလင်္ကာ'} ${mm(g.rows.length)} ခု</span></h3><div class="nt-body">${g.rows.map(curTab==='sk'?hideSk:hideAns).join('')}</div></section>`).join('');
+    body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p><div class="btns">${curTab==='sk'?'':`<button class="btn${alOld?' solid':''}" data-alold>${alOld?'မေးခွန်းဟောင်းသီးသန့် ✓':'မေးခွန်းဟောင်းသီးသန့်'}</button>`}<button class="btn solid" data-alall>အဖြေအားလုံး ကြည့်မည်</button></div></div>` + vis.map((g,gi)=>`<section class="group" id="grp-${gi}"><h3>${esc(g.title)} <span>${curTab==='sk'?'စကားစပ်':'အလင်္ကာ'} ${mm(g.rows.length)} ခု</span></h3><div class="nt-body">${g.rows.map(curTab==='sk'?hideSk:hideAns).join('')}</div></section>`).join('');
   } else {
     body = `<div class="secbar"><p class="lead" style="margin:0">${tab.hint}</p>
         <div class="btns"><button class="btn solid" data-all>အဖြေအားလုံး ကြည့်မည်</button><button class="btn" data-reset>ပြန်စမည်</button></div></div>` +
@@ -956,6 +957,7 @@ function viewLesson(ci){
     <p class="note">မေးခွန်းအောက်ရှိ <span class="chip"><b>၂၄</b>ပြည်တွင်း မေးခွန်း ၂</span> သည် ထိုမေးခွန်း မည်သည့်နှစ်၊ မည်သည့်စာမေးပွဲ၊ မည်သည့်စုံတွင် ပါခဲ့သည်ကို ပြသည်။ နံပါတ်တူ မေးခွန်း ၂ ခု ပါလျှင် စာအုပ်ထဲက ◆ မေးခွန်းဖြစ်သည်။</p>
     <div class="tabbar"><div class="tabs${TT.length>3?' four':''}" role="tablist" aria-label="မေးခွန်းအမျိုးအစား">${tabBtns}</div>${jump2||jump}</div>
     ${body}`;
+  $app.classList.toggle('alold',alOld&&(curTab==='al'||curTab==='ak'));
 }
 
 
@@ -1137,7 +1139,7 @@ function setRevealed(q,on){
   q.querySelector('[data-rv]').textContent = on ? 'အဖြေဖျောက်မည်' : 'အဖြေကြည့်မည်';
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-nav],[data-set],[data-tab],[data-rv],[data-pick],[data-all],[data-reset],[data-jump],[data-alsel],[data-alans],[data-alall],[data-newexam],[data-clear],[data-dur],[data-start],[data-end],[data-logout]');
+  const t = e.target.closest('[data-nav],[data-set],[data-tab],[data-rv],[data-pick],[data-all],[data-reset],[data-jump],[data-alsel],[data-alans],[data-alall],[data-alold],[data-newexam],[data-clear],[data-dur],[data-start],[data-end],[data-logout]');
   if (!t) return;
   if (t.hasAttribute('data-logout')){ authClear(); viewLogin(); return; }
   if (t.hasAttribute('data-dur')){ PX.mins=+t.getAttribute('data-dur'); t.parentNode.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b===t)); return; }
@@ -1149,6 +1151,7 @@ document.addEventListener('click', e => {
   if (t.hasAttribute('data-newexam')){ navigate('g12-practice-'+(1000+Math.floor(Math.random()*9000))); return; }
   if (t.hasAttribute('data-clear')){ $app.querySelectorAll('.q .opt').forEach(o=>o.classList.remove('picked')); $app.querySelectorAll('input.blank').forEach(i=>i.value=''); return; }
   if (t.hasAttribute('data-nav')){ e.preventDefault(); navigate(t.getAttribute('data-nav')); return; }
+  if (t.hasAttribute('data-alold')){ alOld=!alOld; $app.classList.toggle('alold',alOld); t.classList.toggle('solid',alOld); t.textContent=alOld?'မေးခွန်းဟောင်းသီးသန့် ✓':'မေးခွန်းဟောင်းသီးသန့်'; return; }
   if (t.hasAttribute('data-alans')){ const d=t.nextElementSibling; d.hidden=!d.hidden; t.textContent=d.hidden?'အဖြေကြည့်မည်':'အဖြေဖျောက်မည်'; return; }
   if (t.hasAttribute('data-alall')){
     const ds=[...$app.querySelectorAll('.alans')], show=ds.some(d=>d.hidden);
